@@ -2,7 +2,7 @@ use base64::{engine::general_purpose, Engine as _};
 use image::{ImageBuffer, ImageFormat, Rgba};
 use rust_embed::Embed;
 use serde::{Deserialize, Serialize};
-use std::io::Cursor;
+use std::{env, io::Cursor};
 #[derive(Embed)]
 #[folder = "assets/"]
 struct Asset;
@@ -13,7 +13,7 @@ struct Base64Png {
     data: String,
 }
 #[tauri::command]
-fn greet() -> Result<Base64Png, String> {
+fn get_test() -> Result<Base64Png, String> {
     let test_png_embeded = Asset::get("test.png").unwrap();
     let test_png_cursor = Cursor::new(test_png_embeded.data);
     let image = image::load(test_png_cursor, ImageFormat::Png).unwrap();
@@ -23,12 +23,21 @@ fn greet() -> Result<Base64Png, String> {
         data: image.to_rgba8().to_base64png().unwrap(),
     })
 }
+#[tauri::command]
+fn unzip_template() -> Result<String, String> {
+    let template_zip_embeded = Asset::get("python_project_template.zip").unwrap();
+    let template_zip_cursor = Cursor::new(template_zip_embeded.data);
+    let current_dir = env::current_dir().unwrap();
+    let target_dir = current_dir.join("template");
+    zip_extract::extract(template_zip_cursor, &target_dir, true).unwrap();
+    Ok(target_dir.to_str().unwrap().to_string())
+}
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![get_test, unzip_template])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

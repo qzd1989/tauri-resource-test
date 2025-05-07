@@ -1,20 +1,26 @@
 <script setup>
 import { ref, onMounted, reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
-const testPng = ref({
+const test = ref({
   data: null,
   width: null,
   height: null,
 });
+const targetDir = ref("");
+const unzip = async () => {
+  targetDir.value = await invoke("unzip_template");
+};
 onMounted(async () => {
-  testPng.value = await invoke("greet");
+  test.value = await invoke("get_test");
 });
 </script>
 
 <template>
   <main class="container">
     <h1>Welcome to Tauri + Vue!</h1>
-    <img :src="testPng.data" :width="testPng.width" :height="testPng.height" />
+    <img :src="test.data" :width="test.width" :height="test.height" />
+    <button @click="unzip">click</button>
+    {{ targetDir }}
   </main>
 </template>
 
