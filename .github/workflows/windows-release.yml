@@ -1,0 +1,63 @@
+name: windows-build-on-release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "23"
+
+      - name: Install llvm, vcredist140 via Chocolatey
+        run: |
+          choco install vcredist140 -y
+          choco install llvm --version=18.1.8 -y
+
+      - name: Verify Microsoft Visual C++ Installation
+        run: |
+          dir "C:\Windows\System32\*.dll"
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run tauri build
+
+      - name: Copy vcredist140 DLL
+        run: |
+          copy "C:\Windows\System32\msvcp140.dll" "./src-tauri/target/release"
+          copy "C:\Windows\System32\concrt140.dll" "./src-tauri/target/release"
+          copy "C:\Windows\System32\vcruntime140.dll" "./src-tauri/target/release"
+          copy "C:\Windows\System32\vcruntime140_1.dll" "./src-tauri/target/release"
+
+      - name: dirs check
+        run: |
+          dir ./src-tauri/target
+          dir ./src-tauri/target/release
+
+      - name: Verify build output
+        run: |
+          echo "Checking build output:"
+          dir ./src-tauri/target/release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kiwi
+          path: |
+            ./src-tauri/target/release/*.exe
+            ./src-tauri/target/release/*.dll
