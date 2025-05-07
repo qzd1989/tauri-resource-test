@@ -26,3 +26,5 @@ tauri-plugin-fs = "2"
 
 image = { version = "*", features = ["jpeg", "png"] }
 base64 = "*"
+rust-embed = "8.7.1"
+zip-extract = "0.2.3"

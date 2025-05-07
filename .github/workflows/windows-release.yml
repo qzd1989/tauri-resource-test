@@ -1,8 +1,7 @@
 name: windows-build-on-release
 
 on:
-  release:
-    types: [published]
+  push:
 
 jobs:
   build:
@@ -16,14 +15,10 @@ jobs:
         with:
           node-version: "23"
 
-      - name: Install llvm, vcredist140 via Chocolatey
-        run: |
-          choco install vcredist140 -y
-          choco install llvm --version=18.1.8 -y
-
-      - name: Verify Microsoft Visual C++ Installation
-        run: |
-          dir "C:\Windows\System32\*.dll"
+      # - name: Install llvm, vcredist140 via Chocolatey
+      #   run: |
+      #     choco install vcredist140 -y
+      #     choco install llvm --version=18.1.8 -y
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
@@ -37,12 +32,12 @@ jobs:
       - name: Build
         run: npm run tauri build
 
-      - name: Copy vcredist140 DLL
-        run: |
-          copy "C:\Windows\System32\msvcp140.dll" "./src-tauri/target/release"
-          copy "C:\Windows\System32\concrt140.dll" "./src-tauri/target/release"
-          copy "C:\Windows\System32\vcruntime140.dll" "./src-tauri/target/release"
-          copy "C:\Windows\System32\vcruntime140_1.dll" "./src-tauri/target/release"
+      # - name: Copy vcredist140 DLL
+      #   run: |
+      #     copy "C:\Windows\System32\msvcp140.dll" "./src-tauri/target/release"
+      #     copy "C:\Windows\System32\concrt140.dll" "./src-tauri/target/release"
+      #     copy "C:\Windows\System32\vcruntime140.dll" "./src-tauri/target/release"
+      #     copy "C:\Windows\System32\vcruntime140_1.dll" "./src-tauri/target/release"
 
       - name: dirs check
         run: |

@@ -1,32 +1,28 @@
 use base64::{engine::general_purpose, Engine as _};
-use image::{ImageBuffer, Rgba};
+use image::{ImageBuffer, ImageFormat, Rgba};
+use rust_embed::Embed;
 use serde::{Deserialize, Serialize};
-use tauri::{path::BaseDirectory, AppHandle, Manager as _};
-
+use std::io::Cursor;
+#[derive(Embed)]
+#[folder = "assets/"]
+struct Asset;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct Base64Png {
     width: u32,
     height: u32,
     data: String,
 }
-
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
-fn greet(app: AppHandle) -> Result<Base64Png, String> {
-    let test_png = app
-        .path()
-        .resolve("assets/test.png", BaseDirectory::Resource)
-        .unwrap();
-    let img = image::open(&test_png).unwrap();
-    let rgba_img = img.to_rgba8();
-    let base64_png = Base64Png {
-        width: rgba_img.width(),
-        height: rgba_img.height(),
-        data: rgba_img.to_base64png().unwrap(),
-    };
-    Ok(base64_png)
+fn greet() -> Result<Base64Png, String> {
+    let test_png_embeded = Asset::get("test.png").unwrap();
+    let test_png_cursor = Cursor::new(test_png_embeded.data);
+    let image = image::load(test_png_cursor, ImageFormat::Png).unwrap();
+    Ok(Base64Png {
+        width: image.width(),
+        height: image.height(),
+        data: image.to_rgba8().to_base64png().unwrap(),
+    })
 }
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -36,7 +32,6 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
-
 pub trait ImageBufferRgbaExt {
     fn to_base64png(&self) -> Result<String, String>;
 }
